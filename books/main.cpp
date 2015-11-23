@@ -44,13 +44,13 @@ string get_image_path(string image);
 int main(int argc, const char * argv[]) {
     cout << "Loading Images\n";
     // load all bookview images
-    for(int i = 1; i < NUM_BOOKVIEW; i++){
+    for(int i = 1; i <= NUM_BOOKVIEW; i++){
         if(!load_image(get_bookview_path(i), &bookview_images[i])){
             return -1;
         }
     }
     // load all page images
-    for(int i = 1; i < NUM_PAGES; i++){
+    for(int i = 1; i <= NUM_PAGES; i++){
         if(!load_image(get_page_path(i), &page_images[i])){
             return -1;
         }
