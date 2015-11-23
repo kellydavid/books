@@ -44,14 +44,14 @@ string get_image_path(string image);
 int main(int argc, const char * argv[]) {
     cout << "Loading Images\n";
     // load all bookview images
-    for(int i = 1; i <= NUM_BOOKVIEW; i++){
-        if(!load_image(get_bookview_path(i), &bookview_images[i])){
+    for(int i = 0; i < NUM_BOOKVIEW; i++){
+        if(!load_image(get_bookview_path(i+1), &bookview_images[i])){
             return -1;
         }
     }
     // load all page images
-    for(int i = 1; i <= NUM_PAGES; i++){
-        if(!load_image(get_page_path(i), &page_images[i])){
+    for(int i = 0; i < NUM_PAGES; i++){
+        if(!load_image(get_page_path(i+1), &page_images[i])){
             return -1;
         }
     }
@@ -60,6 +60,16 @@ int main(int argc, const char * argv[]) {
         return -1;
     }
     cout << "Successfully Loaded Images\n";
+    
+    // Back Projection
+    ColourHistogram blue_hist = * new ColourHistogram(blue_colour_sample, 5);
+    blue_hist.NormaliseHistogram();
+    for(int i = 0; i < NUM_BOOKVIEW; i++){
+        Mat back_project = blue_hist.BackProject(bookview_images[i]);
+        DisplayImage(back_project, "back projection " + to_string(i), 100, 100);
+        waitKey(0);
+        cvDestroyAllWindows();
+    }
     return 0;
 }
 
