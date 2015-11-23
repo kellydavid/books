@@ -11,7 +11,7 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
-//#include "Utilities.h"
+#include "histogram.hpp"
 
 using namespace std;
 using namespace cv;
