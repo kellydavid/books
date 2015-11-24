@@ -64,12 +64,27 @@ int main(int argc, const char * argv[]) {
     // Back Projection
     ColourHistogram blue_hist = * new ColourHistogram(blue_colour_sample, 5);
     blue_hist.NormaliseHistogram();
+    Mat *back_project = new Mat[NUM_BOOKVIEW]();
     for(int i = 0; i < NUM_BOOKVIEW; i++){
-        Mat back_project = blue_hist.BackProject(bookview_images[i]);
-        DisplayImage(back_project, "back projection " + to_string(i), 100, 100);
+        back_project[i] = blue_hist.BackProject(bookview_images[i]);
+//        DisplayImage(back_project[i], "back projection " + to_string(i), 100, 100);
+//        waitKey(0);
+//        cvDestroyAllWindows();
+    }
+    
+    // Convert to binary
+    Mat *binary = new Mat[NUM_BOOKVIEW]();
+    Mat five_by_five_element(5, 5, CV_8U, Scalar(1));
+    for(int i = 0; i < NUM_BOOKVIEW; i++){
+        threshold(back_project[i], binary[i], 0, 255, THRESH_BINARY | THRESH_OTSU);
+        morphologyEx(binary[i], binary[i], MORPH_CLOSE, five_by_five_element);
+        Mat display = binary[i].clone();
+        resize(display, display, Size(binary[i].cols/2, binary[i].rows/2));
+        DisplayImage(display, "Binary back projection " + to_string(i), 100, 100);
         waitKey(0);
         cvDestroyAllWindows();
     }
+    
     return 0;
 }
 
