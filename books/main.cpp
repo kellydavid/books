@@ -31,6 +31,13 @@ Mat bookview_images[NUM_BOOKVIEW];
 Mat page_images[NUM_PAGES];
 Mat blue_colour_sample;
 
+Point * get_corners(Point points[], int num_points);
+
+void clone_point(Point source, Point *dest);
+
+// returns the center point from a contour
+Point get_centre(vector<Point> contour);
+
 void DisplayImage(Mat image, string message, int x, int y);
 
 bool load_image(string filename, Mat *image);
@@ -80,12 +87,84 @@ int main(int argc, const char * argv[]) {
         morphologyEx(binary[i], binary[i], MORPH_CLOSE, five_by_five_element);
         Mat display = binary[i].clone();
         resize(display, display, Size(binary[i].cols/2, binary[i].rows/2));
-        DisplayImage(display, "Binary back projection " + to_string(i), 100, 100);
+//        DisplayImage(display, "Binary back projection " + to_string(i), 100, 100);
+//        waitKey(0);
+//        cvDestroyAllWindows();
+    }
+    
+    // get contours
+    for(int i = 0; i < NUM_BOOKVIEW; i++){
+        vector<vector<Point>> contours;
+        vector<Vec4i> hierarchy;
+        findContours(binary[i], contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+        Mat contours_image = binary[i].clone();
+        cout << "Image #" << to_string(i) << " number contours #" << contours.size() << endl;
+        Point *points = new Point[contours.size()];
+        for(int j = 0; j < contours.size(); j++){
+            points[j] = get_centre(contours[j]);
+            cout << "Contour #" << j << " Centre Point: " << points[j].x << ", " << points[j].y << endl;
+            Scalar colour(rand()&0xFF, rand()&0xFF, rand()&0xFF);
+            drawContours(contours_image, contours, j, colour);
+        }
+        Point *corners = get_corners(points, (int)contours.size());
+        cout << "Image #" << i << " (" << corners[0].x << ", " << corners[0].y << ") ("
+        << corners[1].x << ", " << corners[1].y << ") (" << corners[2].x << ", " << corners[2].y << ") ("
+        << corners[3].x << ", " << corners[3].y << ")" << endl;
+        resize(contours_image, contours_image, Size(contours_image.cols / 2, contours_image.rows / 2));
+        DisplayImage(contours_image, "Contours " + to_string(i), 100, 100);
         waitKey(0);
         cvDestroyAllWindows();
     }
     
+    
+    
     return 0;
+}
+
+Point * get_corners(Point points[], int num_points){
+    if(num_points > 4){
+        Point *corners = new Point[4]();
+        clone_point(points[0], &corners[0]);
+        clone_point(points[0], &corners[1]);
+        clone_point(points[0], &corners[2]);
+        clone_point(points[0], &corners[3]);
+        for(int i = 0; i < num_points; i++){
+            // right
+            if(points[i].x > corners[2].x){
+                clone_point(points[i], &corners[2]);
+            }
+            // bottom
+            if(points[i].y < corners[3].y){
+                clone_point(points[i], &corners[3]);
+            }
+            // top
+            if(points[i].y > corners[0].y){
+                clone_point(points[i], &corners[0]);
+            }
+            // left
+            if(points[i].x < corners[1].x){
+                clone_point(points[i], &corners[1]);
+            }
+        }
+        return corners;
+    }
+    else{
+        return NULL;
+    }
+}
+
+void clone_point(Point source, Point *dest){
+    dest->x = source.x;
+    dest->y = source.y;
+}
+
+Point get_centre(vector<Point> contour){
+    double M00, M01, M10;
+    CvMoments mnts = moments(contour, true);
+    M00 = cvGetSpatialMoment(&mnts,0,0);
+    M10 = cvGetSpatialMoment(&mnts,1,0);
+    M01 = cvGetSpatialMoment(&mnts,0,1);
+    return Point((int)(M10/M00), (int)(M01/M00));
 }
 
 // Displays a single image
