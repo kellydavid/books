@@ -92,6 +92,7 @@ int main(int argc, const char * argv[]) {
 //        cvDestroyAllWindows();
     }
     
+    vector<vector<Point>> corners(NUM_BOOKVIEW);
     // get contours
     for(int i = 0; i < NUM_BOOKVIEW; i++){
         vector<vector<Point>> contours;
@@ -106,16 +107,23 @@ int main(int argc, const char * argv[]) {
             Scalar colour(rand()&0xFF, rand()&0xFF, rand()&0xFF);
             drawContours(contours_image, contours, j, colour);
         }
-        Point *corners = get_corners(points, (int)contours.size());
-        cout << "Image #" << i << " (" << corners[0].x << ", " << corners[0].y << ") ("
-        << corners[1].x << ", " << corners[1].y << ") (" << corners[2].x << ", " << corners[2].y << ") ("
-        << corners[3].x << ", " << corners[3].y << ")" << endl;
+        corners[i].resize(4);
+        Point *corner = get_corners(points, (int)contours.size());
+        corners[i].push_back(corner[3]);
+        corners[i].push_back(corner[2]);
+        corners[i].push_back(corner[1]);
+        corners[i].push_back(corner[0]);
+        cout << "Image #" << i << " (" << corner[0].x << ", " << corner[0].y << ") ("
+        << corner[1].x << ", " << corner[1].y << ") (" << corner[2].x << ", " << corner[2].y << ") ("
+        << corner[3].x << ", " << corner[3].y << ")" << endl;
         resize(contours_image, contours_image, Size(contours_image.cols / 2, contours_image.rows / 2));
         DisplayImage(contours_image, "Contours " + to_string(i), 100, 100);
         waitKey(0);
         cvDestroyAllWindows();
     }
     
+    
+    // geometric transformation
     
     
     return 0;
