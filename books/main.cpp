@@ -159,12 +159,13 @@ void clone_point(Point source, Point *dest){
 }
 
 Point get_centre(vector<Point> contour){
-    double M00, M01, M10;
-    CvMoments mnts = moments(contour, true);
-    M00 = cvGetSpatialMoment(&mnts,0,0);
-    M10 = cvGetSpatialMoment(&mnts,1,0);
-    M01 = cvGetSpatialMoment(&mnts,0,1);
-    return Point((int)(M10/M00), (int)(M01/M00));
+    int sumX = 0, sumY = 0;
+    int size = (int)contour.size();
+    for(int i = 0; i < size; i++){
+        sumX += contour[i].x;
+        sumY += contour[i].y;
+    }
+    return Point(sumX / size, sumY / size);
 }
 
 // Displays a single image
