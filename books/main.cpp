@@ -12,19 +12,12 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include "histogram.hpp"
+#include "utilities.hpp"
 
 using namespace std;
 using namespace cv;
 
 #define DEBUG_MODE
-#define PATH_TO_IMAGES "../../books/images/"
-#define RECOGNITION_COUNT 25 // number of images to recognise from sample
-#define NUM_BOOKVIEW 50 // total number of images in sample
-#define NUM_PAGES 13 // the number of images of the actual pages
-#define BLUE_COLOUR_SAMPLE "blue_sample.png"
-#define BOOKVIEW "BookView"
-#define ACTUAL_PAGE "Page"
-#define JPEG_EXTENSION ".jpg"
 
 #define TOP_CORNER 0
 #define LEFT_CORNER 1
@@ -42,16 +35,6 @@ void clone_point(Point2f source, Point2f *dest);
 
 // returns the center point from a contour
 Point2f get_centre(vector<Point> contour);
-
-void DisplayImage(Mat image, string message, int x, int y);
-
-bool load_image(string filename, Mat *image);
-
-string get_bookview_path(int index);
-
-string get_page_path(int index);
-
-string get_image_path(string image);
 
 int main(int argc, const char * argv[]) {
     cout << "Loading Images\n";
@@ -208,37 +191,3 @@ Point2f get_centre(vector<Point> contour){
     return Point2f(sumX / size, sumY / size);
 }
 
-// Displays a single image
-void DisplayImage(Mat image, string message, int x, int y){
-    namedWindow(message, CV_WINDOW_NORMAL);
-    moveWindow(message, x, y);
-    imshow(message, image);
-}
-
-bool load_image(string filename, Mat *image){
-    *image = imread(filename, 1);
-    if(image->empty()){
-        cout << "Could not open " << filename << "." << endl;
-        return false;
-    }else{
-        return true;
-    }
-}
-
-string get_bookview_path(int index){
-    ostringstream os;
-    os << PATH_TO_IMAGES << BOOKVIEW << (index <= 9 ? "0":"") << index << JPEG_EXTENSION;
-    return os.str();
-}
-
-string get_page_path(int index){
-    ostringstream os;
-    os << PATH_TO_IMAGES << ACTUAL_PAGE << (index <= 9 ? "0":"") << index << JPEG_EXTENSION;
-    return os.str();
-}
-
-string get_image_path(string image){
-    ostringstream os;
-    os << PATH_TO_IMAGES << image;
-    return os.str();
-}

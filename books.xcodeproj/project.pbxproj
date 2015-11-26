@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		63AAA0C61C03201900426D55 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63AAA0C51C03201900426D55 /* main.cpp */; };
 		63AAA0E41C038F1500426D55 /* histogram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63AAA0E21C038F1500426D55 /* histogram.cpp */; settings = {ASSET_TAGS = (); }; };
+		63C2DF4B1C074E1200575D75 /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63C2DF491C074E1200575D75 /* utilities.cpp */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -29,6 +30,8 @@
 		63AAA0D21C0340E000426D55 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; path = images; sourceTree = "<group>"; };
 		63AAA0E21C038F1500426D55 /* histogram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = histogram.cpp; sourceTree = "<group>"; };
 		63AAA0E31C038F1500426D55 /* histogram.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = histogram.hpp; sourceTree = "<group>"; };
+		63C2DF491C074E1200575D75 /* utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utilities.cpp; sourceTree = "<group>"; };
+		63C2DF4A1C074E1200575D75 /* utilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = utilities.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +66,8 @@
 			children = (
 				63AAA0D21C0340E000426D55 /* images */,
 				63AAA0C51C03201900426D55 /* main.cpp */,
+				63C2DF491C074E1200575D75 /* utilities.cpp */,
+				63C2DF4A1C074E1200575D75 /* utilities.hpp */,
 				63AAA0E21C038F1500426D55 /* histogram.cpp */,
 				63AAA0E31C038F1500426D55 /* histogram.hpp */,
 			);
@@ -125,6 +130,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63C2DF4B1C074E1200575D75 /* utilities.cpp in Sources */,
 				63AAA0E41C038F1500426D55 /* histogram.cpp in Sources */,
 				63AAA0C61C03201900426D55 /* main.cpp in Sources */,
 			);
@@ -285,6 +291,7 @@
 				63AAA0CB1C03201900426D55 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
