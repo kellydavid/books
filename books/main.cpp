@@ -26,17 +26,22 @@ using namespace cv;
 #define ACTUAL_PAGE "Page"
 #define JPEG_EXTENSION ".jpg"
 
+#define TOP_CORNER 0
+#define LEFT_CORNER 1
+#define RIGHT_CORNER 2
+#define BOTTOM_CORNER 3
+
 int bookview_actual_pages[RECOGNITION_COUNT] = {1,2,3,4,5,6,7,8,9,10,11,12,13,2,3,5,4,7,9,8,7,11,13,12,2};
 Mat bookview_images[NUM_BOOKVIEW];
 Mat page_images[NUM_PAGES];
 Mat blue_colour_sample;
 
-Point * get_corners(Point points[], int num_points);
+Point2f * get_corners(Point2f points[], int num_points);
 
-void clone_point(Point source, Point *dest);
+void clone_point(Point2f source, Point2f *dest);
 
 // returns the center point from a contour
-Point get_centre(vector<Point> contour);
+Point2f get_centre(vector<Point> contour);
 
 void DisplayImage(Mat image, string message, int x, int y);
 
@@ -92,7 +97,7 @@ int main(int argc, const char * argv[]) {
 //        cvDestroyAllWindows();
     }
     
-    vector<vector<Point>> corners(NUM_BOOKVIEW);
+    vector<vector<Point2f>> corners(NUM_BOOKVIEW);
     // get contours
     for(int i = 0; i < NUM_BOOKVIEW; i++){
         vector<vector<Point>> contours;
@@ -100,15 +105,14 @@ int main(int argc, const char * argv[]) {
         findContours(binary[i], contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
         Mat contours_image = binary[i].clone();
         cout << "Image #" << to_string(i) << " number contours #" << contours.size() << endl;
-        Point *points = new Point[contours.size()];
+        Point2f *points = new Point2f[contours.size()];
         for(int j = 0; j < contours.size(); j++){
             points[j] = get_centre(contours[j]);
             cout << "Contour #" << j << " Centre Point: " << points[j].x << ", " << points[j].y << endl;
             Scalar colour(rand()&0xFF, rand()&0xFF, rand()&0xFF);
             drawContours(contours_image, contours, j, colour);
         }
-        corners[i].resize(4);
-        Point *corner = get_corners(points, (int)contours.size());
+        Point2f *corner = get_corners(points, (int)contours.size());
         corners[i].push_back(corner[3]);
         corners[i].push_back(corner[2]);
         corners[i].push_back(corner[1]);
@@ -117,41 +121,69 @@ int main(int argc, const char * argv[]) {
         << corner[1].x << ", " << corner[1].y << ") (" << corner[2].x << ", " << corner[2].y << ") ("
         << corner[3].x << ", " << corner[3].y << ")" << endl;
         resize(contours_image, contours_image, Size(contours_image.cols / 2, contours_image.rows / 2));
-        DisplayImage(contours_image, "Contours " + to_string(i), 100, 100);
-        waitKey(0);
-        cvDestroyAllWindows();
+//        DisplayImage(contours_image, "Contours " + to_string(i), 100, 100);
+//        waitKey(0);
+//        cvDestroyAllWindows();
     }
     
     
     // geometric transformation
-    
+    Mat *geo_transform = new Mat[NUM_BOOKVIEW]();
+    for(int i = 0; i < NUM_BOOKVIEW; i++){
+        Point2f source[4] = {*new Point2f(), *new Point2f(), *new Point2f(), *new Point2f()};
+        if(corners[i][LEFT_CORNER].y < corners[i][RIGHT_CORNER].y){
+            // if left corner higher than right corner
+            // top left is left corner other wise its top corner
+            clone_point(corners[i][TOP_CORNER], &source[0]);
+            clone_point(corners[i][RIGHT_CORNER], &source[1]);
+            clone_point(corners[i][LEFT_CORNER], &source[2]);
+            clone_point(corners[i][BOTTOM_CORNER], &source[3]);
+            
+        }else{
+            clone_point(corners[i][LEFT_CORNER], &source[0]);
+            clone_point(corners[i][TOP_CORNER], &source[1]);
+            clone_point(corners[i][BOTTOM_CORNER], &source[2]);
+            clone_point(corners[i][RIGHT_CORNER], &source[3]);
+        }
+        Point2f dest[4];
+        dest[0] = *new Point(8, 7); // top left
+        dest[1] = *new Point(398, 7); // top right
+        dest[2] = *new Point(8, 589); // bottom left
+        dest[3] = *new Point(398, 589); // bottom right
+        
+        Mat perspective_transform = getPerspectiveTransform(source, dest);
+        warpPerspective(bookview_images[i], geo_transform[i], perspective_transform, *new Size(400, 600));
+        DisplayImage(geo_transform[i], "Geometric Transform " + to_string(i), 100, 100);
+        waitKey(0);
+        cvDestroyAllWindows();
+    }
     
     return 0;
 }
 
-Point * get_corners(Point points[], int num_points){
+Point2f * get_corners(Point2f points[], int num_points){
     if(num_points > 4){
-        Point *corners = new Point[4]();
+        Point2f *corners = new Point2f[4]();
         clone_point(points[0], &corners[0]);
         clone_point(points[0], &corners[1]);
         clone_point(points[0], &corners[2]);
         clone_point(points[0], &corners[3]);
         for(int i = 0; i < num_points; i++){
-            // right
-            if(points[i].x > corners[2].x){
-                clone_point(points[i], &corners[2]);
-            }
-            // bottom
-            if(points[i].y < corners[3].y){
-                clone_point(points[i], &corners[3]);
-            }
             // top
-            if(points[i].y > corners[0].y){
-                clone_point(points[i], &corners[0]);
+            if(points[i].y < corners[TOP_CORNER].y){
+                clone_point(points[i], &corners[TOP_CORNER]);
             }
             // left
-            if(points[i].x < corners[1].x){
-                clone_point(points[i], &corners[1]);
+            if(points[i].x < corners[LEFT_CORNER].x){
+                clone_point(points[i], &corners[LEFT_CORNER]);
+            }
+            // right
+            if(points[i].x > corners[RIGHT_CORNER].x){
+                clone_point(points[i], &corners[RIGHT_CORNER]);
+            }
+            // bottom
+            if(points[i].y > corners[BOTTOM_CORNER].y){
+                clone_point(points[i], &corners[BOTTOM_CORNER]);
             }
         }
         return corners;
@@ -161,19 +193,19 @@ Point * get_corners(Point points[], int num_points){
     }
 }
 
-void clone_point(Point source, Point *dest){
+void clone_point(Point2f source, Point2f *dest){
     dest->x = source.x;
     dest->y = source.y;
 }
 
-Point get_centre(vector<Point> contour){
+Point2f get_centre(vector<Point> contour){
     int sumX = 0, sumY = 0;
     int size = (int)contour.size();
     for(int i = 0; i < size; i++){
         sumX += contour[i].x;
         sumY += contour[i].y;
     }
-    return Point(sumX / size, sumY / size);
+    return Point2f(sumX / size, sumY / size);
 }
 
 // Displays a single image
