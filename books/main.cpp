@@ -23,15 +23,6 @@ using namespace cv;
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
 
-// returns binary image
-void otsu_threshold(Mat *image);
-
-// can be used on a binary image
-void binary_closing_operation(Mat *image);
-
-// back projects the colour sample
-Mat back_project(Mat image, Mat colour_sample);
-
 // Applies the necessary geometric transformation to an image
 // so that the page is extracted and correctly aligned
 Mat geo_transform(Mat image, vector<Point2f> corners);
@@ -75,7 +66,7 @@ int main(int argc, const char * argv[]) {
         }
         
         // back projection
-        Mat proc_image = back_project(image, blue_colour_sample);
+        Mat proc_image = back_project(image, blue_colour_sample, NUM_BINS_BLUE_BACK_PROJECT);
         
         // Convert to binary
         otsu_threshold(&proc_image);
@@ -98,22 +89,6 @@ int main(int argc, const char * argv[]) {
     }
     
     return 0;
-}
-
-void otsu_threshold(Mat *image){
-    threshold(*image, *image, 0, 255, THRESH_BINARY | THRESH_OTSU);
-}
-
-void binary_closing_operation(Mat *image){
-    Mat five_by_five_element(5, 5, CV_8U, Scalar(1));
-    morphologyEx(*image, *image, MORPH_CLOSE, five_by_five_element);
-}
-
-Mat back_project(Mat image, Mat colour_sample){
-    // Back Projection
-    ColourHistogram blue_hist = * new ColourHistogram(colour_sample, 5);
-    blue_hist.NormaliseHistogram();
-    return blue_hist.BackProject(image);
 }
 
 Mat geo_transform(Mat image, vector<Point2f> corners){
