@@ -18,6 +18,12 @@ void DisplayImage(Mat image, string message, int x, int y){
     imshow(message, image);
 }
 
+void draw_points(Mat *image, vector<Point2f> points){
+    for(int i = 0; i < (int)points.size(); i++){
+        circle(*image, points[i], 5, Scalar(0, 0, 255), -1);
+    }
+}
+
 bool load_image(string filename, Mat *image){
     *image = imread(filename, 1);
     if(image->empty()){

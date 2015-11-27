@@ -27,6 +27,8 @@
 
 void DisplayImage(cv::Mat image, std::string message, int x, int y);
 
+void draw_points(cv::Mat *image, std::vector<cv::Point2f> points);
+
 bool load_image(std::string filename, cv::Mat *image);
 
 std::string get_bookview_path(int index);
