@@ -23,6 +23,9 @@ using namespace cv;
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
 
+// performs template matching on the given image comparing it with a number of template images
+int template_match(Mat image, Mat *templates, int num_templates);
+
 // Applies the necessary geometric transformation to an image
 // so that the page is extracted and correctly aligned
 Mat geo_transform(Mat image, vector<Point2f> corners);
@@ -40,7 +43,8 @@ void clone_point(Point2f source, Point2f *dest);
 Point2f get_centre(vector<Point> contour);
 
 int main(int argc, const char * argv[]) {
-    //int bookview_actual_pages[RECOGNITION_COUNT] = {1,2,3,4,5,6,7,8,9,10,11,12,13,2,3,5,4,7,9,8,7,11,13,12,2};
+    int known_truth[RECOGNITION_COUNT] = {1,2,3,4,5,6,7,8,9,10,11,12,13,2,3,5,4,7,9,8,7,11,13,12,2};
+    int pages_found[RECOGNITION_COUNT];
     Mat page_images[NUM_PAGES];
     Mat blue_colour_sample;
     
@@ -65,6 +69,8 @@ int main(int argc, const char * argv[]) {
             return -1;
         }
         
+        cout << "Processing Image #" << i << endl;
+        
         // back projection
         Mat proc_image = back_project(image, blue_colour_sample, NUM_BINS_BLUE_BACK_PROJECT);
         
@@ -83,12 +89,38 @@ int main(int argc, const char * argv[]) {
         // geometric transformation
         Mat transformed_image = geo_transform(image, corners);
         
-        DisplayImage(transformed_image, "Transformed image " + to_string(i), 50, 50);
-        cvWaitKey(0);
-        cvDestroyAllWindows();
+        pages_found[i] = template_match(transformed_image, page_images, NUM_PAGES);
+        pages_found[i] += 1; // increment by one because the page files start from one and not zero
     }
     
+    int correct = 0, incorrect = 0;
+    for(int i = 0; i < RECOGNITION_COUNT; i++){
+        cout << "Image #" << i << " answer: " << pages_found[i] << "; known truth: " << known_truth[i] << endl;
+        if(pages_found[i] == known_truth[i])
+            correct++;
+        else
+            incorrect++;
+    }
+    cout << "Correct: " << correct << " Incorrect: " << incorrect << endl;
+    
     return 0;
+}
+
+int template_match(Mat image, Mat *templates, int num_templates){
+    int best_match = -1;
+    double highest = 0.0;
+    for(int i = 0; i < num_templates; i++){
+        Mat matching_space;
+        matching_space.create(image.rows-templates[i].rows+1, image.cols-templates[i].cols+1, CV_32FC1);
+        matchTemplate(image, templates[i], matching_space, CV_TM_CCORR_NORMED);
+        double minVal; double maxVal; Point minLoc; Point maxLoc;
+        minMaxLoc( matching_space, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
+        if(maxVal > highest){
+            best_match = i;
+            highest = maxVal;
+        }
+    }
+    return best_match;
 }
 
 Mat geo_transform(Mat image, vector<Point2f> corners){
@@ -100,7 +132,7 @@ Mat geo_transform(Mat image, vector<Point2f> corners){
     
     Mat perspective_transform = getPerspectiveTransform(corners.data(), dest);
     Mat result = *new Mat();
-    warpPerspective(image, result, perspective_transform, *new Size(400, 600));
+    warpPerspective(image, result, perspective_transform, *new Size(420, 620));
     return result;
 }
 
