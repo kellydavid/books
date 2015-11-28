@@ -11,6 +11,7 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
+#include "opencv2/xfeatures2d.hpp"
 #include "histogram.hpp"
 #include "utilities.hpp"
 
@@ -22,6 +23,10 @@ using namespace cv;
 #define TOP_RIGHT_CORNER 1
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
+
+
+// uses SIFT object recognition to return the best matching template index
+int sift_match(Mat image, Mat *templates, int num_templates);
 
 // performs template matching on the given image comparing it with a number of template images
 int template_match(Mat image, Mat *templates, int num_templates);
@@ -89,6 +94,7 @@ int main(int argc, const char * argv[]) {
         // geometric transformation
         Mat transformed_image = geo_transform(image, corners);
         
+        //pages_found[i] = sift_match(transformed_image, page_images, NUM_PAGES); // sift not working so well
         pages_found[i] = template_match(transformed_image, page_images, NUM_PAGES);
         pages_found[i] += 1; // increment by one because the page files start from one and not zero
     }
@@ -104,6 +110,52 @@ int main(int argc, const char * argv[]) {
     cout << "Correct: " << correct << " Incorrect: " << incorrect << endl;
     
     return 0;
+}
+
+int sift_match(Mat image, Mat *templates, int num_templates){
+    int best_match = -1;
+    int highest_matches = 0;
+    Mat gray_image1;
+    cvtColor(image, gray_image1, CV_BGR2GRAY);
+    for(int i = 0; i < num_templates; i++){
+        cv::Ptr<Feature2D> f2d = xfeatures2d::SIFT::create();
+        //cv::Ptr<Feature2D> f2d = xfeatures2d::SURF::create();
+        //cv::Ptr<Feature2D> f2d = ORB::create();
+        // you get the picture, i hope..
+        
+        Mat gray_image2;
+        cvtColor(templates[i], gray_image2, CV_BGR2GRAY);
+        
+        //-- Step 1: Detect the keypoints:
+        std::vector<KeyPoint> keypoints_1, keypoints_2;
+        f2d->detect( gray_image1, keypoints_1 );
+        f2d->detect( gray_image2, keypoints_2 );
+        
+        //-- Step 2: Calculate descriptors (feature vectors)
+        Mat descriptors_1, descriptors_2;
+        f2d->compute( gray_image1, keypoints_1, descriptors_1 );
+        f2d->compute( gray_image2, keypoints_2, descriptors_2 );
+        
+        //-- Step 3: Matching descriptor vectors using BFMatcher :
+        //BFMatcher matcher;
+        FlannBasedMatcher matcher;
+        std::vector< DMatch > matches;
+        matcher.match( descriptors_1, descriptors_2, matches );
+        
+//        Mat display;
+//        drawMatches(gray_image1, keypoints_1, gray_image2, keypoints_2, matches, display);
+//        DisplayImage(display, "Matches", 50, 50);
+//        cvWaitKey(0);
+//        cvDestroyAllWindows();
+        
+        cout << "Number matches: " << (int)matches.size() << endl;
+        
+        if((int)matches.size() > highest_matches){
+            best_match = i;
+            highest_matches = (int)matches.size();
+        }
+    }
+    return best_match;
 }
 
 int template_match(Mat image, Mat *templates, int num_templates){
