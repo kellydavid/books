@@ -24,6 +24,8 @@ using namespace cv;
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
 
+// removes points that aren't on a white page
+vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points);
 
 // uses SIFT object recognition to return the best matching template index
 int sift_match(Mat image, Mat *templates, int num_templates);
@@ -88,6 +90,9 @@ int main(int argc, const char * argv[]) {
         // get points
         vector<Point2f> blue_points = get_points(proc_image);
         
+        // remove points that arent on page
+        blue_points = remove_outlier_points(image, blue_points);
+        
         // get corners
         vector<Point2f> corners = get_corners(blue_points);
         
@@ -110,6 +115,29 @@ int main(int argc, const char * argv[]) {
     cout << "Correct: " << correct << " Incorrect: " << incorrect << endl;
     
     return 0;
+}
+
+vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points){
+    vector<Point2f> result;
+    for(int i = 0; i < (int)points.size(); i++){
+        int top_left_x = points[i].x-(LENGTH_ROI_BLUE_POINTS/2);
+        int top_left_y = points[i].y-(LENGTH_ROI_BLUE_POINTS/2);
+        if(top_left_x >=0 && top_left_y >= 0){
+            // get the roi around the point
+            Rect region = Rect(top_left_x, top_left_y, LENGTH_ROI_BLUE_POINTS,LENGTH_ROI_BLUE_POINTS);
+            Mat roi = image(region);
+            cvtColor(roi, roi, CV_BGR2GRAY);
+            otsu_threshold(&roi);
+            // get the number of black pixels in B/W image
+            int total_pixels = LENGTH_ROI_BLUE_POINTS * LENGTH_ROI_BLUE_POINTS;
+            int black_pixels = total_pixels - countNonZero(roi);
+            // if the number of black pixels is less than a third of the roi then add to result
+            if(black_pixels < (total_pixels / 3)){
+                result.push_back(points[i]);
+            }
+        }
+    }
+    return result;
 }
 
 int sift_match(Mat image, Mat *templates, int num_templates){

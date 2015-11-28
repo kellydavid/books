@@ -14,7 +14,8 @@
 #define NUM_BOOKVIEW 50 // total number of images in sample
 #define NUM_PAGES 13 // the number of images of the actual pages
 #define BLUE_COLOUR_SAMPLE "blue_sample.png"
-#define NUM_BINS_BLUE_BACK_PROJECT 4
+#define NUM_BINS_BLUE_BACK_PROJECT 5
+#define LENGTH_ROI_BLUE_POINTS 30
 #define BOOKVIEW "BookView"
 #define ACTUAL_PAGE "Page"
 #define JPEG_EXTENSION ".jpg"
