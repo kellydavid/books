@@ -23,8 +23,8 @@ using namespace cv;
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
 
-#define DISPLAY_PROCESSING
-#define DISPLAY_RESULT
+//#define DISPLAY_PROCESSING
+//#define DISPLAY_RESULT
 
 // removes points that aren't on a white page
 vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points);
@@ -110,39 +110,73 @@ int main(int argc, const char * argv[]) {
         draw_points(&temp_image3, blue_points);
         temp_image3 = rescaleImage(temp_image3, 0.5);
         display_processing = JoinImagesHorizontally(display_processing, "", temp_image3, "Removed Points Off Page", 0, Scalar(0, 0, 255));
-        imshow("Processing Image#" + to_string(i+1), display_processing);
+        imshow("Processing Image #" + to_string(i+1), display_processing);
         cvWaitKey(0);
         cvDestroyAllWindows();
 #endif
-        
-        // get corners
-        vector<Point2f> corners = get_corners(blue_points);
-        
-        // geometric transformation
-        Mat transformed_image = geo_transform(image, corners);
-        
-        //pages_found[i] = sift_match(transformed_image, page_images, NUM_PAGES); // sift not working so well
-        pages_found[i] = template_match(transformed_image, page_images, NUM_PAGES);
-        pages_found[i] += 1; // increment by one because the page files start from one and not zero
-        
+        if((int)blue_points.size() >= NUM_POINTS_ON_PAGE){
+            // get corners
+            vector<Point2f> corners = get_corners(blue_points);
+            
+            // geometric transformation
+            Mat transformed_image = geo_transform(image, corners);
+            
+            //pages_found[i] = sift_match(transformed_image, page_images, NUM_PAGES); // sift not working so well
+            pages_found[i] = template_match(transformed_image, page_images, NUM_PAGES);
+            pages_found[i] += 1; // increment by one because the page files start from one and not zero
+            
 #ifdef DISPLAY_RESULT
-        Mat display_result = JoinImagesHorizontally(transformed_image, "Observed Image", page_images[pages_found[i] - 1], "Best Match", 0, Scalar(0, 0, 255));
-        display_result = JoinImagesHorizontally(display_result, "", page_images[known_truth[i]-1], "Known Truth", 0, Scalar(0, 0, 255));
-        imshow("Result For Image #" + to_string(i+1), display_result);
-        cvWaitKey(0);
-        cvDestroyAllWindows();
+            Mat display_result = JoinImagesHorizontally(transformed_image, "Observed Image", page_images[pages_found[i] - 1], "Best Match", 0, Scalar(0, 0, 255));
+            display_result = JoinImagesHorizontally(display_result, "", page_images[known_truth[i]-1], "Known Truth", 0, Scalar(0, 0, 255));
+            imshow("Result For Image #" + to_string(i+1), display_result);
+            cvWaitKey(0);
+            cvDestroyAllWindows();
 #endif
+        }else{
+            pages_found[i] = -1;
+        }
     }
     
-    int correct = 0, incorrect = 0;
+    // Measuring Performance
+    
+    int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
     for(int i = 0; i < RECOGNITION_COUNT; i++){
-        cout << "Image #" << i << " answer: " << pages_found[i] << "; known truth: " << known_truth[i] << endl;
+        cout << "Image #" << i + 1 << " answer: " << pages_found[i] << "; known truth: " << known_truth[i] << endl;
         if(pages_found[i] == known_truth[i])
-            correct++;
-        else
-            incorrect++;
+            truePositives++;
+        else if(pages_found[i] != -1 && known_truth[i] == -1){
+            falsePositives++;
+        }
+        else if(pages_found[i] == -1 && known_truth[i] != -1){
+            falseNegatives++;
+        }
+        else if(pages_found[i] == -1 && known_truth[i] == -1){
+            trueNegatives++;
+        }
     }
-    cout << "Correct: " << correct << " Incorrect: " << incorrect << endl;
+    
+    float recall = truePositives / (truePositives + falseNegatives);
+    float precision = truePositives / (truePositives + falsePositives);
+    float accuracy = float(truePositives + trueNegatives) / (float)RECOGNITION_COUNT;
+    float spec_denominator = (falsePositives + trueNegatives);
+    float specificity;
+    if(spec_denominator != 0){
+        specificity = trueNegatives / spec_denominator;
+    }else{
+        specificity = 1.0;
+    }
+    float f1 = 2.0 * (precision * recall) / (precision + recall);
+    
+    cout << endl << "System Performance" << endl;
+    cout << "True Positives: " << to_string(truePositives) << endl;
+    cout << "False Positives: " << to_string(falsePositives)<< endl;
+    cout << "True Negatives: " << to_string(trueNegatives)<< endl;
+    cout << "False Negatives: " << to_string(falseNegatives)<< endl;
+    cout << "System Recall: " << to_string(recall) << endl;
+    cout << "System Precision: " << to_string(precision) << endl;
+    cout << "System Accuracy: " << to_string(accuracy) << endl;
+    cout << "System Specificity: " << to_string(specificity) << endl;
+    cout << "System F1 Measure: " << to_string(f1) << endl;
     
     return 0;
 }

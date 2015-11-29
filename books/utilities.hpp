@@ -13,6 +13,7 @@
 #define RECOGNITION_COUNT 25 // number of images to recognise from sample
 #define NUM_BOOKVIEW 50 // total number of images in sample
 #define NUM_PAGES 13 // the number of images of the actual pages
+#define NUM_POINTS_ON_PAGE 20 // number of points on page
 #define BLUE_COLOUR_SAMPLE "blue_sample.png"
 #define NUM_BINS_BLUE_BACK_PROJECT 5
 #define LENGTH_ROI_BLUE_POINTS 30
