@@ -45,9 +45,6 @@ vector<Point2f> get_points(Mat binary_image);
 // gets the four corner points from an array of points
 vector<Point2f> get_corners(vector<Point2f> points);
 
-// copys the data from one source point to dest point
-void clone_point(Point2f source, Point2f *dest);
-
 // returns the center point from a contour
 Point2f get_centre(vector<Point> contour);
 
@@ -69,8 +66,8 @@ int main(int argc, const char * argv[]) {
     if(!(load_image(get_image_path(BLUE_COLOUR_SAMPLE), &blue_colour_sample))){
         return -1;
     }
-    cout << "Successfully Loaded Images\n";
     
+    // Loop through each image to be recognised
     for(int i = 0; i < RECOGNITION_COUNT; i++){
         // load current image to process
         Mat image;
@@ -78,7 +75,7 @@ int main(int argc, const char * argv[]) {
             return -1;
         }
         
-        cout << "Processing Image #" << i+1 << endl;
+        cout << "Processing Image #" << i+1 << " ... ";
         
         // back projection
         Mat proc_image = back_project(image, blue_colour_sample, NUM_BINS_BLUE_BACK_PROJECT);
@@ -95,10 +92,10 @@ int main(int argc, const char * argv[]) {
 #ifdef DISPLAY_PROCESSING
         Mat display_processing;
         Mat temp_image1 = image.clone();
-        temp_image1 = rescaleImage(temp_image1, 0.5);
+        temp_image1 = rescaleImage(temp_image1, 0.3);
         Mat temp_image2 = image.clone();
         draw_points(&temp_image2, blue_points);
-        temp_image2 = rescaleImage(temp_image2, 0.5);
+        temp_image2 = rescaleImage(temp_image2, 0.3);
         display_processing = JoinImagesHorizontally(temp_image1, "Original Image", temp_image2, "Blue Points Found", 0, Scalar(0, 0, 255));
 #endif
         
@@ -108,12 +105,15 @@ int main(int argc, const char * argv[]) {
 #ifdef DISPLAY_PROCESSING
         Mat temp_image3 = image.clone();
         draw_points(&temp_image3, blue_points);
-        temp_image3 = rescaleImage(temp_image3, 0.5);
+        temp_image3 = rescaleImage(temp_image3, 0.3);
         display_processing = JoinImagesHorizontally(display_processing, "", temp_image3, "Removed Points Off Page", 0, Scalar(0, 0, 255));
         imshow("Processing Image #" + to_string(i+1), display_processing);
         cvWaitKey(0);
         cvDestroyAllWindows();
 #endif
+        
+        // if the number of points is at least the number of expected points
+        // proceed to template matching. Otherwise the image is recognised as having no page
         if((int)blue_points.size() >= NUM_POINTS_ON_PAGE){
             // get corners
             vector<Point2f> corners = get_corners(blue_points);
@@ -135,13 +135,13 @@ int main(int argc, const char * argv[]) {
         }else{
             pages_found[i] = -1;
         }
+        cout << "answer: " << pages_found[i] << "; known truth: " << known_truth[i] << endl;
     }
     
     // Measuring Performance
     
     int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
     for(int i = 0; i < RECOGNITION_COUNT; i++){
-        cout << "Image #" << i + 1 << " answer: " << pages_found[i] << "; known truth: " << known_truth[i] << endl;
         if(pages_found[i] == known_truth[i])
             truePositives++;
         else if(pages_found[i] != -1 && known_truth[i] == -1){
@@ -196,7 +196,7 @@ vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points){
             int total_pixels = LENGTH_ROI_BLUE_POINTS * LENGTH_ROI_BLUE_POINTS;
             int black_pixels = total_pixels - countNonZero(roi);
             // if the number of black pixels is less than a third of the roi then add to result
-            if(black_pixels < (total_pixels / 3)){
+            if(black_pixels < (total_pixels / RATIO_BLACK_PIXELS_ROI_BLUE_POINTS)){
                 result.push_back(points[i]);
             }
         }
@@ -269,14 +269,14 @@ int template_match(Mat image, Mat *templates, int num_templates){
 
 Mat geo_transform(Mat image, vector<Point2f> corners){
     Point2f dest[4];
-    dest[0] = *new Point(8, 7); // top left
-    dest[1] = *new Point(398, 7); // top right
-    dest[2] = *new Point(8, 589); // bottom left
-    dest[3] = *new Point(398, 589); // bottom right
+    dest[0] = Point2f(TEMPLATE_LEFT_CORNER_X, TEMPLATE_TOP_CORNER_Y); // top left
+    dest[1] = Point2f(TEMPLATE_RIGHT_CORNER_X, TEMPLATE_TOP_CORNER_Y); // top right
+    dest[2] = Point2f(TEMPLATE_LEFT_CORNER_X, TEMPLATE_BOTTOM_CORNER_Y); // bottom left
+    dest[3] = Point2f(TEMPLATE_RIGHT_CORNER_X, TEMPLATE_BOTTOM_CORNER_Y); // bottom right
     
     Mat perspective_transform = getPerspectiveTransform(corners.data(), dest);
     Mat result = *new Mat();
-    warpPerspective(image, result, perspective_transform, *new Size(420, 620));
+    warpPerspective(image, result, perspective_transform, *new Size(TEMPLATE_WIDTH, TEMPLATE_HEIGHT));
     return result;
 }
 
@@ -294,51 +294,39 @@ vector<Point2f> get_points(Mat binary_image){
 
 vector<Point2f> get_corners(vector<Point2f> points){
     int num_points = (int)points.size();
-    if(num_points > 4){
-        vector<Point2f> corners(4);
-        Point2f top = *new Point2f(points[0].x, points[0].y);
-        Point2f left = *new Point2f(points[0].x, points[0].y);
-        Point2f right = *new Point2f(points[0].x, points[0].y);
-        Point2f bottom = *new Point2f(points[0].x, points[0].y);
-        for(int i = 0; i < num_points; i++){
-            // top
-            if(points[i].y < top.y){
-                clone_point(points[i], &top);
-            }
-            // left
-            if(points[i].x < left.x){
-                clone_point(points[i], &left);
-            }
-            // right
-            if(points[i].x > right.x){
-                clone_point(points[i], &right);
-            }
-            // bottom
-            if(points[i].y > bottom.y){
-                clone_point(points[i], &bottom);
-            }
+    assert(num_points >= 4);
+    vector<Point2f> corners(4);
+    Point2f top = points[0], left = points[0], right = points[0], bottom = points[0];
+    for(int i = 1; i < num_points; i++){
+        // top
+        if(points[i].y < top.y){
+            top = points[i];
         }
-        if(left.y  < right.y){ // left higher than right
-            clone_point(left, &corners[TOP_LEFT_CORNER]);
-            clone_point(top, &corners[TOP_RIGHT_CORNER]);
-            clone_point(bottom, &corners[BOTTOM_LEFT_CORNER]);
-            clone_point(right, &corners[BOTTOM_RIGHT_CORNER]);
-        }else{ // right higher than left
-            clone_point(top, &corners[TOP_LEFT_CORNER]);
-            clone_point(right, &corners[TOP_RIGHT_CORNER]);
-            clone_point(left, &corners[BOTTOM_LEFT_CORNER]);
-            clone_point(bottom, &corners[BOTTOM_RIGHT_CORNER]);
+        // left
+        if(points[i].x < left.x){
+            left = points[i];
         }
-        return corners;
+        // right
+        if(points[i].x > right.x){
+            right = points[i];
+        }
+        // bottom
+        if(points[i].y > bottom.y){
+            bottom = points[i];
+        }
     }
-    else{
-        return (vector<Point2f>)NULL;
+    if(left.y  < right.y){ // left higher than right
+        corners[TOP_LEFT_CORNER] = left;
+        corners[TOP_RIGHT_CORNER] = top;
+        corners[BOTTOM_LEFT_CORNER] = bottom;
+        corners[BOTTOM_RIGHT_CORNER] = right;
+    }else{ // right higher than left
+        corners[TOP_LEFT_CORNER] = top;
+        corners[TOP_RIGHT_CORNER] = right;
+        corners[BOTTOM_LEFT_CORNER] = left;
+        corners[BOTTOM_RIGHT_CORNER] = bottom;
     }
-}
-
-void clone_point(Point2f source, Point2f *dest){
-    dest->x = source.x;
-    dest->y = source.y;
+    return corners;
 }
 
 Point2f get_centre(vector<Point> contour){

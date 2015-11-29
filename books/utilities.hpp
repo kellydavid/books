@@ -17,9 +17,16 @@
 #define BLUE_COLOUR_SAMPLE "blue_sample.png"
 #define NUM_BINS_BLUE_BACK_PROJECT 5
 #define LENGTH_ROI_BLUE_POINTS 30
+#define RATIO_BLACK_PIXELS_ROI_BLUE_POINTS 3
 #define BOOKVIEW "BookView"
 #define ACTUAL_PAGE "Page"
 #define JPEG_EXTENSION ".jpg"
+#define TEMPLATE_LEFT_CORNER_X 8
+#define TEMPLATE_RIGHT_CORNER_X 398
+#define TEMPLATE_TOP_CORNER_Y 7
+#define TEMPLATE_BOTTOM_CORNER_Y 589
+#define TEMPLATE_HEIGHT 620
+#define TEMPLATE_WIDTH 420
 
 #include <stdio.h>
 #include <iostream>
