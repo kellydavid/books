@@ -45,6 +45,38 @@ void draw_points(Mat *image, vector<Point2f> points){
     }
 }
 
+cv::Mat rescaleImage(cv::Mat image, double scale){
+    Mat result;
+    resize(image, result, Size(image.cols * scale, image.rows * scale));
+    return result;
+}
+
+Mat JoinImagesHorizontally( Mat& image1, string name1, Mat& image2, string name2, int spacing, Scalar passed_colour){
+    Mat result( (image1.rows > image2.rows) ? image1.rows : image2.rows,
+               image1.cols + image2.cols + spacing,
+               image1.type() );
+    result.setTo(Scalar(255,255,255));
+    Mat imageROI;
+    imageROI = result(cv::Rect(0,0,image1.cols,image1.rows));
+    image1.copyTo(imageROI);
+    if (spacing > 0)
+    {
+        imageROI = result(cv::Rect(image1.cols,0,spacing,image1.rows));
+        imageROI.setTo(Scalar(255,255,255));
+    }
+    imageROI = result(cv::Rect(image1.cols+spacing,0,image2.cols,image2.rows));
+    image2.copyTo(imageROI);
+    writeText( result, name1, 13, 6, passed_colour );
+    writeText( imageROI, name2, 13, 6, passed_colour );
+    return result;
+}
+
+void writeText( Mat image, string text, int row, int column, Scalar passed_colour, double scale, int thickness ){
+    Scalar colour( 0, 0, 255);
+    Point location( column, row );
+    putText( image, text.c_str(), location, FONT_HERSHEY_SIMPLEX, scale, (passed_colour.val[0] == -1.0) ? colour : passed_colour, thickness );
+}
+
 bool load_image(string filename, Mat *image){
     *image = imread(filename, 1);
     if(image->empty()){

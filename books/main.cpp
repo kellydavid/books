@@ -18,11 +18,13 @@
 using namespace std;
 using namespace cv;
 
-#define DEBUG_MODE
 #define TOP_LEFT_CORNER 0
 #define TOP_RIGHT_CORNER 1
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
+
+#define DISPLAY_PROCESSING
+#define DISPLAY_RESULT
 
 // removes points that aren't on a white page
 vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points);
@@ -76,7 +78,7 @@ int main(int argc, const char * argv[]) {
             return -1;
         }
         
-        cout << "Processing Image #" << i << endl;
+        cout << "Processing Image #" << i+1 << endl;
         
         // back projection
         Mat proc_image = back_project(image, blue_colour_sample, NUM_BINS_BLUE_BACK_PROJECT);
@@ -90,8 +92,28 @@ int main(int argc, const char * argv[]) {
         // get points
         vector<Point2f> blue_points = get_points(proc_image);
         
+#ifdef DISPLAY_PROCESSING
+        Mat display_processing;
+        Mat temp_image1 = image.clone();
+        temp_image1 = rescaleImage(temp_image1, 0.5);
+        Mat temp_image2 = image.clone();
+        draw_points(&temp_image2, blue_points);
+        temp_image2 = rescaleImage(temp_image2, 0.5);
+        display_processing = JoinImagesHorizontally(temp_image1, "Original Image", temp_image2, "Blue Points Found", 0, Scalar(0, 0, 255));
+#endif
+        
         // remove points that arent on page
         blue_points = remove_outlier_points(image, blue_points);
+        
+#ifdef DISPLAY_PROCESSING
+        Mat temp_image3 = image.clone();
+        draw_points(&temp_image3, blue_points);
+        temp_image3 = rescaleImage(temp_image3, 0.5);
+        display_processing = JoinImagesHorizontally(display_processing, "", temp_image3, "Removed Points Off Page", 0, Scalar(0, 0, 255));
+        imshow("Processing Image#" + to_string(i+1), display_processing);
+        cvWaitKey(0);
+        cvDestroyAllWindows();
+#endif
         
         // get corners
         vector<Point2f> corners = get_corners(blue_points);
@@ -102,6 +124,14 @@ int main(int argc, const char * argv[]) {
         //pages_found[i] = sift_match(transformed_image, page_images, NUM_PAGES); // sift not working so well
         pages_found[i] = template_match(transformed_image, page_images, NUM_PAGES);
         pages_found[i] += 1; // increment by one because the page files start from one and not zero
+        
+#ifdef DISPLAY_RESULT
+        Mat display_result = JoinImagesHorizontally(transformed_image, "Observed Image", page_images[pages_found[i] - 1], "Best Match", 0, Scalar(0, 0, 255));
+        display_result = JoinImagesHorizontally(display_result, "", page_images[known_truth[i]-1], "Known Truth", 0, Scalar(0, 0, 255));
+        imshow("Result For Image #" + to_string(i+1), display_result);
+        cvWaitKey(0);
+        cvDestroyAllWindows();
+#endif
     }
     
     int correct = 0, incorrect = 0;
