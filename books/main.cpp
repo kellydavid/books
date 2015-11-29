@@ -23,9 +23,9 @@ using namespace cv;
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
 
-#define DISPLAY_BACK_PROJECTION
-#define DISPLAY_POINT_LOCATION
-#define DISPLAY_RESULT
+//#define DISPLAY_BACK_PROJECTION
+//#define DISPLAY_POINT_LOCATION
+//#define DISPLAY_RESULT
 
 // removes points that aren't on a white page
 vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points);
@@ -155,24 +155,25 @@ int main(int argc, const char * argv[]) {
     
     // Measuring Performance
     
-    int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
+    float truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
     for(int i = 0; i < RECOGNITION_COUNT; i++){
-        if(pages_found[i] == known_truth[i])
+        if(pages_found[i] == known_truth[i]){
             truePositives++;
-        else if(pages_found[i] != -1 && known_truth[i] == -1){
+        }
+        if(pages_found[i] != known_truth[i]){
             falsePositives++;
         }
-        else if(pages_found[i] == -1 && known_truth[i] != -1){
+        if(pages_found[i] == -1 && known_truth[i] != -1){
             falseNegatives++;
         }
-        else if(pages_found[i] == -1 && known_truth[i] == -1){
+        if(pages_found[i] == -1 && known_truth[i] == -1){
             trueNegatives++;
         }
     }
     
     float recall = truePositives / (truePositives + falseNegatives);
     float precision = truePositives / (truePositives + falsePositives);
-    float accuracy = float(truePositives + trueNegatives) / (float)RECOGNITION_COUNT;
+    float accuracy = (truePositives + trueNegatives) / (float)RECOGNITION_COUNT;
     float spec_denominator = (falsePositives + trueNegatives);
     float specificity;
     if(spec_denominator != 0){
