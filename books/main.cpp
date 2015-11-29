@@ -23,9 +23,9 @@ using namespace cv;
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
 
-//#define DISPLAY_BACK_PROJECTION
-//#define DISPLAY_POINT_LOCATION
-//#define DISPLAY_RESULT
+#define DISPLAY_BACK_PROJECTION
+#define DISPLAY_POINT_LOCATION
+#define DISPLAY_RESULT
 
 // removes points that aren't on a white page
 vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points);
