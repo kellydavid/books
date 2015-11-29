@@ -211,26 +211,22 @@ int sift_match(Mat image, Mat *templates, int num_templates){
     cvtColor(image, gray_image1, CV_BGR2GRAY);
     for(int i = 0; i < num_templates; i++){
         cv::Ptr<Feature2D> f2d = xfeatures2d::SIFT::create();
-        //cv::Ptr<Feature2D> f2d = xfeatures2d::SURF::create();
-        //cv::Ptr<Feature2D> f2d = ORB::create();
-        // you get the picture, i hope..
         
         Mat gray_image2;
         cvtColor(templates[i], gray_image2, CV_BGR2GRAY);
         
-        //-- Step 1: Detect the keypoints:
+        // Detect the keypoints:
         std::vector<KeyPoint> keypoints_1, keypoints_2;
         f2d->detect( gray_image1, keypoints_1 );
         f2d->detect( gray_image2, keypoints_2 );
         
-        //-- Step 2: Calculate descriptors (feature vectors)
+        // Calculate descriptors (feature vectors)
         Mat descriptors_1, descriptors_2;
         f2d->compute( gray_image1, keypoints_1, descriptors_1 );
         f2d->compute( gray_image2, keypoints_2, descriptors_2 );
         
-        //-- Step 3: Matching descriptor vectors using BFMatcher :
-        //BFMatcher matcher;
-        FlannBasedMatcher matcher;
+        // Matching descriptor vectors using BFMatcher :
+        BFMatcher matcher;
         std::vector< DMatch > matches;
         matcher.match( descriptors_1, descriptors_2, matches );
         
