@@ -23,8 +23,9 @@ using namespace cv;
 #define BOTTOM_LEFT_CORNER 2
 #define BOTTOM_RIGHT_CORNER 3
 
-//#define DISPLAY_PROCESSING
-//#define DISPLAY_RESULT
+#define DISPLAY_BACK_PROJECTION
+#define DISPLAY_POINT_LOCATION
+#define DISPLAY_RESULT
 
 // removes points that aren't on a white page
 vector<Point2f> remove_outlier_points(Mat image, vector<Point2f> points);
@@ -80,8 +81,22 @@ int main(int argc, const char * argv[]) {
         // back projection
         Mat proc_image = back_project(image, blue_colour_sample, NUM_BINS_BLUE_BACK_PROJECT);
         
+#ifdef DISPLAY_BACK_PROJECTION
+        Mat temp_back_proj = proc_image.clone();
+        temp_back_proj = rescaleImage(temp_back_proj, 0.3);
+#endif
+        
         // Convert to binary
         otsu_threshold(&proc_image);
+        
+#ifdef DISPLAY_BACK_PROJECTION
+        Mat temp_back_proj2 = proc_image.clone();
+        temp_back_proj2 = rescaleImage(temp_back_proj2, 0.3);
+        Mat display_back_proj = JoinImagesHorizontally(temp_back_proj, "Back Projected Blue", temp_back_proj2, "Thresholded Binary Image", 2, Scalar(255, 0, 0));
+        imshow("Back Projection Image #" + to_string(i + 1), display_back_proj);
+        cvWaitKey(0);
+        cvDestroyAllWindows();
+#endif
         
         // closing operation
         binary_closing_operation(&proc_image);
@@ -89,7 +104,7 @@ int main(int argc, const char * argv[]) {
         // get points
         vector<Point2f> blue_points = get_points(proc_image);
         
-#ifdef DISPLAY_PROCESSING
+#ifdef DISPLAY_POINT_LOCATION
         Mat display_processing;
         Mat temp_image1 = image.clone();
         temp_image1 = rescaleImage(temp_image1, 0.3);
@@ -102,7 +117,7 @@ int main(int argc, const char * argv[]) {
         // remove points that arent on page
         blue_points = remove_outlier_points(image, blue_points);
         
-#ifdef DISPLAY_PROCESSING
+#ifdef DISPLAY_POINT_LOCATION
         Mat temp_image3 = image.clone();
         draw_points(&temp_image3, blue_points);
         temp_image3 = rescaleImage(temp_image3, 0.3);
