@@ -265,10 +265,12 @@ int sift_match(Mat image, Mat *templates, int num_templates){
 int template_match(Mat image, Mat *templates, int num_templates){
     int best_match = -1;
     double highest = 0.0;
+    Mat temp_image = rescaleImage(image, TEMPLATE_SCALE);
     for(int i = 0; i < num_templates; i++){
+        Mat temp_template = rescaleImage(templates[i], TEMPLATE_SCALE);
         Mat matching_space;
-        matching_space.create(image.rows-templates[i].rows+1, image.cols-templates[i].cols+1, CV_32FC1);
-        matchTemplate(image, templates[i], matching_space, CV_TM_CCORR_NORMED);
+        matching_space.create(temp_image.rows-temp_template.rows+1, temp_image.cols-temp_template.cols+1, CV_32FC1);
+        matchTemplate(temp_image, temp_template, matching_space, CV_TM_CCORR_NORMED);
         double minVal; double maxVal; Point minLoc; Point maxLoc;
         minMaxLoc( matching_space, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
         if(maxVal > highest){

@@ -21,6 +21,7 @@
 #define BOOKVIEW "BookView"
 #define ACTUAL_PAGE "Page"
 #define JPEG_EXTENSION ".jpg"
+#define TEMPLATE_SCALE 0.5
 #define TEMPLATE_LEFT_CORNER_X 8
 #define TEMPLATE_RIGHT_CORNER_X 398
 #define TEMPLATE_TOP_CORNER_Y 7
